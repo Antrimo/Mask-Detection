@@ -21,11 +21,57 @@ class _HomepageState extends State<Homepage> {
         body: Container(
           height: h,
           width: w,
-          color: Colors.amberAccent,
+          color: Colors.grey[500],
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Image.asset("assets/Images/mask.jpg"),
+              Container(
+                padding: const EdgeInsets.all(60),
+                child: Image.asset("assets/Images/mask.png"),
+              ),
+              Container(
+                child: const Text(
+                  'Wear a mask, save lives!',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Container(
+                width: double.infinity,
+                height: 70,
+                padding: const EdgeInsets.all(10),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/mask');
+                  },
+                  child: const Text(
+                    'Camera',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              Container(
+                width: double.infinity,
+                height: 70,
+                padding: const EdgeInsets.all(10),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/mask');
+                  },
+                  child: const Text(
+                    'Gallery',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ));
