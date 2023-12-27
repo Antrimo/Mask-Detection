@@ -1,7 +1,7 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:tflite/tflite.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({Key? key}) : super(key: key);
@@ -12,30 +12,62 @@ class Homepage extends StatefulWidget {
 
 class _HomepageState extends State<Homepage> {
   bool _loading = true;
-  File? _image; // Add a null safety check for _image
-  final imagePicker = ImagePicker();
+  File? _image;
+  final ImagePicker _imagePicker = ImagePicker();
+  List _prediction = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadModel();
+  }
+
+  loadModel() async {
+    await Tflite.loadModel(
+        model: 'assets/model_unquant.tflite', labels: 'assets/labels.txt');
+  }
+
+  detectImage(File image) async {
+    var prediction = await Tflite.runModelOnImage(
+      path: image.path,
+      numResults: 2,
+      threshold: 0.5,
+      imageMean: 127.5,
+      imageStd: 127.5,
+    );
+    setState(() {
+      _loading = false;
+      _prediction = prediction!;
+    });
+  }
+
+  @override
+  void dispose() {
+    Tflite.close();
+    super.dispose();
+  }
 
   _loadImageGallery() async {
-    var image = await imagePicker.pickImage(source: ImageSource.gallery);
+    var image = await _imagePicker.pickImage(source: ImageSource.gallery);
     if (image == null) {
       return null;
     } else {
       setState(() {
-        _loading = false;
+        _image = File(image.path);
       });
-      _image = File(image.path);
+      detectImage(_image!);
     }
   }
 
   _loadImageCamera() async {
-    var image = await imagePicker.pickImage(source: ImageSource.camera);
+    var image = await _imagePicker.pickImage(source: ImageSource.camera);
     if (image == null) {
       return null;
     } else {
       setState(() {
-        _loading = false;
+        _image = File(image.path);
       });
-      _image = File(image.path);
+      detectImage(_image!);
     }
   }
 
@@ -75,9 +107,7 @@ class _HomepageState extends State<Homepage> {
                 height: 70,
                 padding: const EdgeInsets.all(10),
                 child: ElevatedButton(
-                  onPressed: () {
-                    _loadImageCamera(); // Use the corrected method name
-                  },
+                  onPressed: _loadImageCamera,
                   child: const Text(
                     'Camera',
                     style: TextStyle(
@@ -92,9 +122,7 @@ class _HomepageState extends State<Homepage> {
                 height: 70,
                 padding: const EdgeInsets.all(10),
                 child: ElevatedButton(
-                  onPressed: () {
-                    _loadImageGallery(); // Use the corrected method name
-                  },
+                  onPressed: _loadImageGallery,
                   child: const Text(
                     'Gallery',
                     style: TextStyle(
@@ -104,13 +132,25 @@ class _HomepageState extends State<Homepage> {
                   ),
                 ),
               ),
-              _loading == false
-                  ? SizedBox(
-                      height: 200,
-                      width: 200,
-                      child: Image.file(_image!),
-                    )
-                  : Container()
+              if (_loading == false)
+                Container(
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: 200,
+                        width: 200,
+                        child: Image.file(_image!),
+                      ),
+                      Text(
+                        _prediction[0].toString(),
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
             ],
           ),
         ),
