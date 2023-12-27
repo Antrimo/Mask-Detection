@@ -1,24 +1,56 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 class Homepage extends StatefulWidget {
-  const Homepage({super.key});
+  const Homepage({Key? key}) : super(key: key);
 
   @override
   State<Homepage> createState() => _HomepageState();
 }
 
 class _HomepageState extends State<Homepage> {
+  bool _loading = true;
+  File? _image; // Add a null safety check for _image
+  final imagePicker = ImagePicker();
+
+  _loadImageGallery() async {
+    var image = await imagePicker.pickImage(source: ImageSource.gallery);
+    if (image == null) {
+      return null;
+    } else {
+      setState(() {
+        _loading = false;
+      });
+      _image = File(image.path);
+    }
+  }
+
+  _loadImageCamera() async {
+    var image = await imagePicker.pickImage(source: ImageSource.camera);
+    if (image == null) {
+      return null;
+    } else {
+      setState(() {
+        _loading = false;
+      });
+      _image = File(image.path);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     var h = MediaQuery.of(context).size.height;
     var w = MediaQuery.of(context).size.width;
 
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.black,
-          title: const Center(child: Text('Mask')),
-        ),
-        body: Container(
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: const Center(child: Text('Mask')),
+      ),
+      body: SingleChildScrollView(
+        child: Container(
           height: h,
           width: w,
           color: Colors.grey[500],
@@ -27,15 +59,15 @@ class _HomepageState extends State<Homepage> {
             children: [
               Container(
                 padding: const EdgeInsets.all(60),
-                child: Image.asset("assets/Images/mask.png"),
+                child: Image.asset(
+                  "assets/Images/mask.png",
+                ),
               ),
-              Container(
-                child: const Text(
-                  'Wear a mask, save lives!',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+              const Text(
+                'Wear a mask, save lives!',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
               Container(
@@ -44,7 +76,7 @@ class _HomepageState extends State<Homepage> {
                 padding: const EdgeInsets.all(10),
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/mask');
+                    _loadImageCamera(); // Use the corrected method name
                   },
                   child: const Text(
                     'Camera',
@@ -61,7 +93,7 @@ class _HomepageState extends State<Homepage> {
                 padding: const EdgeInsets.all(10),
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/mask');
+                    _loadImageGallery(); // Use the corrected method name
                   },
                   child: const Text(
                     'Gallery',
@@ -72,8 +104,17 @@ class _HomepageState extends State<Homepage> {
                   ),
                 ),
               ),
+              _loading == false
+                  ? SizedBox(
+                      height: 200,
+                      width: 200,
+                      child: Image.file(_image!),
+                    )
+                  : Container()
             ],
           ),
-        ));
+        ),
+      ),
+    );
   }
 }
