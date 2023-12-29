@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:tflite/tflite.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -14,29 +14,59 @@ class _HomepageState extends State<Homepage> {
   bool _loading = true;
   File? _image; // Add a null safety check for _image
   final imagePicker = ImagePicker();
+  List _prediction = [];
 
-  _loadImageGallery() async {
+  @override
+  void initState() {
+    super.initState();
+    loadmodel();
+  }
+
+  loadmodel() async {
+    var prediction = await Tflite.loadModel(
+      model: "assets/model_unquant.tflite",
+      labels: "assets/labels.txt",
+    );
+  }
+
+  detectImage(File image) async {
+    var prediction = await Tflite.runModelOnImage(
+      path: image.path,
+      numResults: 2,
+      threshold: 0.6,
+      imageMean: 127.5,
+      imageStd: 127.5,
+    );
+    setState(() {
+      _loading = false;
+      _prediction = prediction!;
+    });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    Tflite.close();
+  }
+
+  loadImageGallery() async {
     var image = await imagePicker.pickImage(source: ImageSource.gallery);
     if (image == null) {
       return null;
     } else {
-      setState(() {
-        _loading = false;
-      });
       _image = File(image.path);
     }
+    detectImage(_image!);
   }
 
-  _loadImageCamera() async {
+  loadImageCamera() async {
     var image = await imagePicker.pickImage(source: ImageSource.camera);
     if (image == null) {
       return null;
     } else {
-      setState(() {
-        _loading = false;
-      });
       _image = File(image.path);
     }
+    detectImage(_image!);
   }
 
   @override
@@ -76,7 +106,7 @@ class _HomepageState extends State<Homepage> {
                 padding: const EdgeInsets.all(10),
                 child: ElevatedButton(
                   onPressed: () {
-                    _loadImageCamera(); // Use the corrected method name
+                    loadImageCamera();
                   },
                   child: const Text(
                     'Camera',
@@ -93,7 +123,7 @@ class _HomepageState extends State<Homepage> {
                 padding: const EdgeInsets.all(10),
                 child: ElevatedButton(
                   onPressed: () {
-                    _loadImageGallery(); // Use the corrected method name
+                    loadImageGallery();
                   },
                   child: const Text(
                     'Gallery',
